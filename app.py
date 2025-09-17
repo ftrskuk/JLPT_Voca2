@@ -39,14 +39,92 @@ class WordEntry:
     meaning: str
 
 
+
+class WordEditDialog(tk.Toplevel):
+    """Simple dialog that collects word information from the user."""
+
+    def __init__(self, parent: tk.Misc, title: str) -> None:
+        super().__init__(parent)
+        self.title(title)
+        self.resizable(False, False)
+        self.transient(parent)
+        self.grab_set()
+        self.protocol("WM_DELETE_WINDOW", self.on_cancel)
+
+        self.result: Optional[WordEntry] = None
+
+        container = ttk.Frame(self, padding=12)
+        container.grid(row=0, column=0, sticky="nsew")
+
+        ttk.Label(container, text="단어").grid(row=0, column=0, sticky="w")
+        self.word_var = tk.StringVar()
+        self.word_entry = ttk.Entry(container, textvariable=self.word_var, width=30)
+        self.word_entry.grid(row=0, column=1, sticky="ew")
+
+        ttk.Label(container, text="발음").grid(row=1, column=0, sticky="w", pady=(8, 0))
+        self.reading_var = tk.StringVar()
+        self.reading_entry = ttk.Entry(container, textvariable=self.reading_var, width=30)
+        self.reading_entry.grid(row=1, column=1, sticky="ew", pady=(8, 0))
+
+        ttk.Label(container, text="뜻").grid(row=2, column=0, sticky="w", pady=(8, 0))
+        self.meaning_var = tk.StringVar()
+        self.meaning_entry = ttk.Entry(container, textvariable=self.meaning_var, width=30)
+        self.meaning_entry.grid(row=2, column=1, sticky="ew", pady=(8, 0))
+
+        button_frame = ttk.Frame(container)
+        button_frame.grid(row=3, column=0, columnspan=2, sticky="ew", pady=(12, 0))
+        button_frame.columnconfigure(0, weight=1)
+        button_frame.columnconfigure(1, weight=1)
+
+        ttk.Button(button_frame, text="취소", command=self.on_cancel).grid(
+            row=0, column=0, sticky="ew"
+        )
+        ttk.Button(button_frame, text="추가", command=self.on_submit).grid(
+            row=0, column=1, sticky="ew", padx=(8, 0)
+        )
+
+        container.columnconfigure(1, weight=1)
+        self.columnconfigure(0, weight=1)
+        self.rowconfigure(0, weight=1)
+
+        self.bind("<Return>", self.on_submit)
+        self.bind("<Escape>", self.on_cancel)
+
+        self.after(100, self.word_entry.focus_set)
+
+    def on_submit(self, event: Optional[tk.Event[tk.Misc]] = None) -> None:
+        word = self.word_var.get().strip()
+        reading = self.reading_var.get().strip()
+        meaning = self.meaning_var.get().strip()
+        if not word:
+            messagebox.showerror("단어 추가", "단어를 입력하세요.", parent=self)
+            self.word_entry.focus_set()
+            return
+        self.result = WordEntry(word=word, reading=reading, meaning=meaning)
+        self.destroy()
+
+    def on_cancel(self, event: Optional[tk.Event[tk.Misc]] = None) -> None:
+        self.result = None
+        self.destroy()
+
+
+class SettingsWindow(tk.Toplevel):
+    """Popup window that lets the user modify timers and manage word lists."""
+
 class SettingsWindow(tk.Toplevel):
     """Popup window that lets the user modify timers and load word lists."""
+
 
     def __init__(self, app: "JLPTVocabApp") -> None:
         super().__init__(app)
         self.app = app
         self.title("Settings")
+
+        self.resizable(True, True)
+        self.minsize(420, 400)
+=
         self.resizable(False, False)
+
         self.protocol("WM_DELETE_WINDOW", self.on_close)
 
         self.show_timer_var = tk.StringVar(value=str(self.app.config_data["showMeaningTimer"]))
@@ -55,6 +133,9 @@ class SettingsWindow(tk.Toplevel):
 
         container = ttk.Frame(self, padding=12)
         container.grid(row=0, column=0, sticky="nsew")
+
+        self.columnconfigure(0, weight=1)
+        self.rowconfigure(0, weight=1)
 
         ttk.Label(container, text="발음/뜻 표시 시간 (초)").grid(row=0, column=0, sticky="w")
         self.show_timer_entry = ttk.Entry(container, textvariable=self.show_timer_var, width=10)
@@ -81,8 +162,56 @@ class SettingsWindow(tk.Toplevel):
         self.save_button = ttk.Button(container, text="저장", command=self.save_settings)
         self.save_button.grid(row=4, column=0, columnspan=2, sticky="ew", pady=(8, 0))
 
+
+        list_frame = ttk.LabelFrame(container, text="단어 목록")
+        list_frame.grid(row=5, column=0, columnspan=2, sticky="nsew", pady=(16, 0))
+        list_frame.columnconfigure(0, weight=1)
+        list_frame.rowconfigure(0, weight=1)
+
+        columns = ("word", "reading", "meaning")
+        self.word_tree = ttk.Treeview(
+            list_frame,
+            columns=columns,
+            show="headings",
+            selectmode="extended",
+            height=8,
+        )
+        self.word_tree.heading("word", text="단어")
+        self.word_tree.heading("reading", text="발음")
+        self.word_tree.heading("meaning", text="뜻")
+        self.word_tree.column("word", anchor="center", width=120)
+        self.word_tree.column("reading", anchor="center", width=120)
+        self.word_tree.column("meaning", anchor="w", width=200)
+        self.word_tree.grid(row=0, column=0, sticky="nsew")
+
+        scrollbar = ttk.Scrollbar(list_frame, orient="vertical", command=self.word_tree.yview)
+        scrollbar.grid(row=0, column=1, sticky="ns")
+        self.word_tree.configure(yscrollcommand=scrollbar.set)
+
+        table_button_frame = ttk.Frame(list_frame)
+        table_button_frame.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(8, 0))
+        table_button_frame.columnconfigure(0, weight=1)
+        table_button_frame.columnconfigure(1, weight=1)
+
+        self.add_word_button = ttk.Button(table_button_frame, text="추가", command=self.add_word)
+        self.add_word_button.grid(row=0, column=0, sticky="ew")
+
+        self.delete_word_button = ttk.Button(
+            table_button_frame, text="삭제", command=self.delete_selected_words
+        )
+        self.delete_word_button.grid(row=0, column=1, sticky="ew", padx=(8, 0))
+
+        container.columnconfigure(0, weight=1)
+        container.columnconfigure(1, weight=1)
+        container.rowconfigure(5, weight=1)
+
+        self.word_tree.bind("<Delete>", self._on_delete_key)
+
+        self.refresh_word_table()
+
         container.columnconfigure(0, weight=1)
         container.columnconfigure(1, weight=0)
+
 
     def focus_initial(self) -> None:
         self.show_timer_entry.focus_set()
@@ -102,6 +231,9 @@ class SettingsWindow(tk.Toplevel):
         success = self.app.load_words_from_path(path)
         if success:
             messagebox.showinfo("단어 불러오기", f"{path.name} 파일에서 단어를 불러왔습니다.")
+
+            self.refresh_word_table()
+
 
     def save_settings(self) -> None:
         try:
@@ -132,6 +264,41 @@ class SettingsWindow(tk.Toplevel):
         if number < 0:
             raise ValueError(f"{field_name}은(는) 0 이상이어야 합니다.")
         return number
+
+
+    def refresh_word_table(self) -> None:
+        if not hasattr(self, "word_tree"):
+            return
+        for item in self.word_tree.get_children():
+            self.word_tree.delete(item)
+        for entry in self.app.words:
+            self.word_tree.insert(
+                "",
+                "end",
+                iid=str(id(entry)),
+                values=(entry.word, entry.reading, entry.meaning),
+            )
+
+    def add_word(self) -> None:
+        dialog = WordEditDialog(self, "단어 추가")
+        self.wait_window(dialog)
+        if dialog.result is None:
+            return
+        self.app.add_word(dialog.result)
+        self.refresh_word_table()
+
+    def delete_selected_words(self) -> None:
+        selection = self.word_tree.selection()
+        if not selection:
+            messagebox.showinfo("단어 삭제", "삭제할 단어를 선택하세요.", parent=self)
+            return
+        ids = [int(item) for item in selection]
+        self.app.delete_words_by_ids(ids)
+        self.refresh_word_table()
+
+    def _on_delete_key(self, event: tk.Event[tk.Misc]) -> str:
+        self.delete_selected_words()
+        return "break"
 
 
 class JLPTVocabApp(tk.Tk):
@@ -250,6 +417,9 @@ class JLPTVocabApp(tk.Tk):
             messagebox.showwarning("단어 불러오기", "CSV 파일에 단어가 없습니다.")
             return False
 
+
+        self.replace_words(entries)
+
         self.words = entries
         random.shuffle(self.words)
         self.current_index = 0
@@ -259,6 +429,7 @@ class JLPTVocabApp(tk.Tk):
             self.meaning_label.config(text="")
         else:
             self.show_current_word()
+
         return True
 
     def cancel_pending_jobs(self) -> None:
@@ -312,6 +483,80 @@ class JLPTVocabApp(tk.Tk):
     def on_close(self) -> None:
         self.cancel_pending_jobs()
         self.destroy()
+
+
+    def replace_words(self, entries: List[WordEntry], shuffle: bool = True) -> None:
+        self.cancel_pending_jobs()
+        self.words = list(entries)
+        if shuffle and self.words:
+            random.shuffle(self.words)
+        self.current_index = 0
+        if not self.words:
+            self.stage = "word"
+            self.word_label.config(text="단어 목록이 없습니다.")
+            self.reading_label.config(text="")
+            self.meaning_label.config(text="")
+            return
+        if self.paused:
+            entry = self.words[self.current_index]
+            self.stage = "word"
+            self.word_label.config(text=entry.word)
+            self.reading_label.config(text="")
+            self.meaning_label.config(text="")
+        else:
+            self.show_current_word()
+
+    def add_word(self, entry: WordEntry) -> None:
+        self.words.append(entry)
+        if len(self.words) == 1:
+            self.current_index = 0
+            if self.paused:
+                self.stage = "word"
+                self.word_label.config(text=entry.word)
+                self.reading_label.config(text="")
+                self.meaning_label.config(text="")
+            else:
+                self.show_current_word()
+
+    def delete_words_by_ids(self, entry_ids: List[int]) -> None:
+        if not entry_ids:
+            return
+        id_set = set(entry_ids)
+        if not id_set:
+            return
+
+        current_entry: Optional[WordEntry]
+        if self.words and 0 <= self.current_index < len(self.words):
+            current_entry = self.words[self.current_index]
+        else:
+            current_entry = None
+
+        self.words = [entry for entry in self.words if id(entry) not in id_set]
+
+        if not self.words:
+            self.cancel_pending_jobs()
+            self.current_index = 0
+            self.stage = "word"
+            self.word_label.config(text="단어 목록이 없습니다.")
+            self.reading_label.config(text="")
+            self.meaning_label.config(text="")
+            return
+
+        if current_entry and current_entry in self.words:
+            self.current_index = self.words.index(current_entry)
+        else:
+            self.current_index = min(self.current_index, len(self.words) - 1)
+
+        self.cancel_pending_jobs()
+        if self.paused:
+            entry = self.words[self.current_index]
+            self.stage = "word"
+            self.word_label.config(text=entry.word)
+            self.reading_label.config(text="")
+            self.meaning_label.config(text="")
+        else:
+            self.show_current_word()
+
 
 
 def load_config(path: Path) -> Dict[str, int | bool]:
