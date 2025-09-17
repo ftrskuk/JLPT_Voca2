@@ -1,5 +1,7 @@
 {
   "showMeaningTimer": 3,
   "nextWordTimer": 5,
-  "alwaysOnTop": true
+  "alwaysOnTop": true,
+  "wordFile": ""
+
 }
