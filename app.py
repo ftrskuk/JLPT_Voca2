@@ -39,6 +39,7 @@ class WordEntry:
     meaning: str
 
 
+
 class WordEditDialog(tk.Toplevel):
     """Simple dialog that collects word information from the user."""
 
@@ -110,12 +111,20 @@ class WordEditDialog(tk.Toplevel):
 class SettingsWindow(tk.Toplevel):
     """Popup window that lets the user modify timers and manage word lists."""
 
+class SettingsWindow(tk.Toplevel):
+    """Popup window that lets the user modify timers and load word lists."""
+
+
     def __init__(self, app: "JLPTVocabApp") -> None:
         super().__init__(app)
         self.app = app
         self.title("Settings")
+
         self.resizable(True, True)
         self.minsize(420, 400)
+=
+        self.resizable(False, False)
+
         self.protocol("WM_DELETE_WINDOW", self.on_close)
 
         self.show_timer_var = tk.StringVar(value=str(self.app.config_data["showMeaningTimer"]))
@@ -124,6 +133,7 @@ class SettingsWindow(tk.Toplevel):
 
         container = ttk.Frame(self, padding=12)
         container.grid(row=0, column=0, sticky="nsew")
+
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)
 
@@ -151,6 +161,7 @@ class SettingsWindow(tk.Toplevel):
 
         self.save_button = ttk.Button(container, text="저장", command=self.save_settings)
         self.save_button.grid(row=4, column=0, columnspan=2, sticky="ew", pady=(8, 0))
+
 
         list_frame = ttk.LabelFrame(container, text="단어 목록")
         list_frame.grid(row=5, column=0, columnspan=2, sticky="nsew", pady=(16, 0))
@@ -198,6 +209,10 @@ class SettingsWindow(tk.Toplevel):
 
         self.refresh_word_table()
 
+        container.columnconfigure(0, weight=1)
+        container.columnconfigure(1, weight=0)
+
+
     def focus_initial(self) -> None:
         self.show_timer_entry.focus_set()
 
@@ -216,7 +231,9 @@ class SettingsWindow(tk.Toplevel):
         success = self.app.load_words_from_path(path)
         if success:
             messagebox.showinfo("단어 불러오기", f"{path.name} 파일에서 단어를 불러왔습니다.")
+
             self.refresh_word_table()
+
 
     def save_settings(self) -> None:
         try:
@@ -247,6 +264,7 @@ class SettingsWindow(tk.Toplevel):
         if number < 0:
             raise ValueError(f"{field_name}은(는) 0 이상이어야 합니다.")
         return number
+
 
     def refresh_word_table(self) -> None:
         if not hasattr(self, "word_tree"):
@@ -399,7 +417,19 @@ class JLPTVocabApp(tk.Tk):
             messagebox.showwarning("단어 불러오기", "CSV 파일에 단어가 없습니다.")
             return False
 
+
         self.replace_words(entries)
+
+        self.words = entries
+        random.shuffle(self.words)
+        self.current_index = 0
+        if self.paused:
+            self.word_label.config(text="단어를 불러왔습니다. 재생을 눌러 시작하세요.")
+            self.reading_label.config(text="")
+            self.meaning_label.config(text="")
+        else:
+            self.show_current_word()
+
         return True
 
     def cancel_pending_jobs(self) -> None:
@@ -453,6 +483,7 @@ class JLPTVocabApp(tk.Tk):
     def on_close(self) -> None:
         self.cancel_pending_jobs()
         self.destroy()
+
 
     def replace_words(self, entries: List[WordEntry], shuffle: bool = True) -> None:
         self.cancel_pending_jobs()
@@ -525,6 +556,7 @@ class JLPTVocabApp(tk.Tk):
             self.meaning_label.config(text="")
         else:
             self.show_current_word()
+
 
 
 def load_config(path: Path) -> Dict[str, int | bool]:
