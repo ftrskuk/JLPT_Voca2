@@ -1,2 +1,18 @@
 # JLPT_Voca2
-For codex testing with JLPT Vocabulary memorizing app2
+
+간단한 JLPT 단어 순환 암기 데스크톱 프로그램입니다. `app.py`를 실행하면 작은 창이 항상 화면 위에 표시되며, 단어 → 발음/뜻 순으로 자동으로 보여 줍니다.
+
+## 주요 기능
+- `words.csv` 기본 단어 목록을 불러와 무작위 순서로 반복 재생
+- 설정에서 `showMeaningTimer`(발음/뜻 표시 지연), `nextWordTimer`(다음 단어 지연), `alwaysOnTop`(항상 위) 조정 가능
+- 설정 창에서 `단어 파일 가져오기...`를 통해 사용자 CSV 파일을 불러오기 가능
+- 일시정지/재생 버튼으로 순환 제어 가능
+- 창 아무 곳이나 드래그하여 위치 이동 가능
+- 설정은 `config.json`에 저장되어 재시작 후에도 유지
+
+## 실행 방법
+```bash
+python app.py
+```
+
+CSV 파일은 `word,reading,meaning` 헤더를 포함해야 하며 UTF-8(또는 UTF-8 with BOM) 인코딩을 권장합니다.
