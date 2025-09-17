@@ -31,6 +31,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "nextWordTimer": 5,
     "alwaysOnTop": True,
     "wordFile": "",
+
 }
 
 
@@ -112,12 +113,15 @@ class WordEditDialog(tk.Toplevel):
 class SettingsWindow(tk.Toplevel):
     """Popup window that lets the user modify timers and manage word lists."""
 
+
     def __init__(self, app: "JLPTVocabApp") -> None:
         super().__init__(app)
         self.app = app
         self.title("Settings")
+
         self.resizable(True, True)
         self.minsize(420, 400)
+
         self.protocol("WM_DELETE_WINDOW", self.on_close)
 
         self.show_timer_var = tk.StringVar(value=str(self.app.config_data["showMeaningTimer"]))
@@ -128,6 +132,7 @@ class SettingsWindow(tk.Toplevel):
         container.grid(row=0, column=0, sticky="nsew")
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)
+
 
         ttk.Label(container, text="발음/뜻 표시 시간 (초)").grid(row=0, column=0, sticky="w")
         self.show_timer_entry = ttk.Entry(container, textvariable=self.show_timer_var, width=10)
@@ -210,6 +215,7 @@ class SettingsWindow(tk.Toplevel):
         self.update_word_file_label()
         self.refresh_word_table()
 
+
     def focus_initial(self) -> None:
         self.show_timer_entry.focus_set()
 
@@ -260,6 +266,7 @@ class SettingsWindow(tk.Toplevel):
         if number < 0:
             raise ValueError(f"{field_name}은(는) 0 이상이어야 합니다.")
         return number
+
 
     def refresh_word_table(self) -> None:
         if not hasattr(self, "word_tree"):
@@ -321,6 +328,7 @@ class JLPTVocabApp(tk.Tk):
         self.words: List[WordEntry] = []
         self._load_initial_words()
 
+
         self.settings_window: Optional[SettingsWindow] = None
         self.current_index = 0
         self.paused = False
@@ -332,6 +340,7 @@ class JLPTVocabApp(tk.Tk):
 
         if self.words:
             random.shuffle(self.words)
+
 
         self.create_widgets()
         self.apply_topmost_setting()
@@ -406,6 +415,7 @@ class JLPTVocabApp(tk.Tk):
 
     def update_config(self, updates: Mapping[str, Any]) -> None:
         self.config_data.update(updates)
+
         save_config(CONFIG_PATH, self.config_data)
         self.apply_topmost_setting()
         if not self.paused:
@@ -420,6 +430,7 @@ class JLPTVocabApp(tk.Tk):
         if not entries:
             messagebox.showwarning("단어 불러오기", "CSV 파일에 단어가 없습니다.")
             return False
+
 
         self.replace_words(entries)
         self.set_current_words_path(path, persist=True)
@@ -492,6 +503,7 @@ class JLPTVocabApp(tk.Tk):
                 )
                 self.words = []
 
+
     def cancel_pending_jobs(self) -> None:
         for job in self.pending_jobs:
             try:
@@ -543,6 +555,7 @@ class JLPTVocabApp(tk.Tk):
     def on_close(self) -> None:
         self.cancel_pending_jobs()
         self.destroy()
+
 
     def replace_words(self, entries: List[WordEntry], shuffle: bool = True) -> None:
         self.cancel_pending_jobs()
@@ -661,6 +674,7 @@ def save_words_to_csv(path: Path, entries: Sequence[WordEntry]) -> None:
         writer.writerow(["word", "reading", "meaning"])
         for entry in entries:
             writer.writerow([entry.word, entry.reading, entry.meaning])
+
 
 
 def load_words_from_csv(path: Path) -> List[WordEntry]:
