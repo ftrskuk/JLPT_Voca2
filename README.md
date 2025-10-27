@@ -1,6 +1,6 @@
 # JLPT_Voca2
 
-간단한 JLPT 단어 순환 암기 데스크톱 프로그램입니다. `app.py`를 실행하면 작은 창이 항상 화면 위에 표시되며, 단어 → 발음/뜻 순으로 자동으로 보여 줍니다.
+간단한 JLPT 단어 순환 암기 데스크톱 프로그램입니다. `app.pyw`를 실행하면 작은 창이 항상 화면 위에 표시되며, 단어 → 발음/뜻 순으로 자동으로 보여 줍니다.
 
 ## 주요 기능
 - `words.csv` 기본 단어 목록을 불러와 무작위 순서로 반복 재생
@@ -12,24 +12,10 @@
 - 창 아무 곳이나 드래그하여 위치 이동 가능
 - 설정은 `config.json`에 저장되어 재시작 후에도 유지 (`wordFile` 키에 현재 단어 파일 경로가 저장됨)
 
+
 ## 실행 방법
 ```bash
-python app.py
+python app.pyw
 ```
 
 CSV 파일은 `word,reading,meaning` 헤더를 포함해야 하며 UTF-8(또는 UTF-8 with BOM) 인코딩을 권장합니다.
-
-### Windows용 실행 파일 만들기
-
-파이썬이 설치되어 있지 않은 PC에서도 실행할 수 있도록 PyInstaller로 독립 실행형 EXE를 만들 수 있습니다.
-
-1. PyInstaller를 설치합니다.
-   ```bash
-   pip install pyinstaller
-   ```
-2. 저장소 루트에서 아래 명령을 실행합니다.
-   ```bash
-   python build_exe.py
-   ```
-
-`dist/JLPTVocab/JLPTVocab.exe`가 생성되며, 이 실행 파일과 함께 생성된 `config.json`, `words.csv`가 번들됩니다. 실행 파일을 배포하면 앱은 사용자별 데이터 디렉터리(`%APPDATA%/JLPTVocab` 또는 macOS의 `~/Library/Application Support/JLPTVocab`, Linux의 `~/.local/share/JLPTVocab`)에 설정과 단어 목록을 복사한 뒤 사용합니다.
