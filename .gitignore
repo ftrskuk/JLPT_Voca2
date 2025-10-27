@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+dist/
+build/
+*.spec
+JLPTVocab-win64.zip
