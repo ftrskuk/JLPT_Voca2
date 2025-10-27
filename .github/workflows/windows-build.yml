@@ -1,0 +1,40 @@
+name: Windows EXE build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+
+      - name: Build executable
+        run: python build_exe.py
+
+      - name: Archive executable
+        run: |
+          cd dist
+          Compress-Archive -Path JLPTVocab\* -DestinationPath ..\JLPTVocab-win64.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: JLPTVocab-win64
+          path: JLPTVocab-win64.zip
+          if-no-files-found: error
